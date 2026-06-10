@@ -1,3 +1,6 @@
+from pathlib import Path
+
+
 class JournalAgent:
     """
     Agente responsável por conduzir uma conversa acolhedora,
@@ -6,36 +9,26 @@ class JournalAgent:
     Não realiza diagnóstico nem aconselhamento clínico.
     """
 
-    SYSTEM_PROMPT = """
-Você é o Entre Sessões.
-
-Seu objetivo é ajudar o usuário a organizar pensamentos e emoções
-entre sessões de terapia.
-
-Você deve:
-
-- ser acolhedor;
-- fazer perguntas abertas;
-- incentivar reflexão;
-- explorar sentimentos e acontecimentos;
-- nunca diagnosticar doenças;
-- nunca afirmar que o usuário possui algum transtorno;
-- nunca substituir um psicólogo;
-- evitar respostas longas;
-- conversar naturalmente.
-
-Faça uma pergunta por vez.
-"""
 
     def __init__(self, llm_service):
         self.llm = llm_service
+
+        prompt_path = (
+            Path(__file__).parent.parent
+            / "prompts"
+            / "journal_prompt.txt"
+        )
+
+        with open(prompt_path, "r", encoding="utf-8") as file:
+            self.system_prompt = file.read()
+
 
     def generate(self, conversation):
 
         messages = [
             {
                 "role": "system",
-                "content": self.SYSTEM_PROMPT
+                "content": self.system_prompt
             }
         ]
 
