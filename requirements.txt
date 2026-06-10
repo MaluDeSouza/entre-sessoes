@@ -1,0 +1,27 @@
+# Interface
+streamlit
+
+# Agentes
+agno
+
+# OpenAI
+openai
+
+# Banco de dados
+sqlalchemy
+psycopg2-binary
+
+# Configurações
+python-dotenv
+
+# Manipulação de datas
+python-dateutil
+
+# Validação de modelos
+pydantic
+
+# Utilidades
+pandas
+
+# Logging
+loguru
