@@ -4,8 +4,9 @@ streamlit
 # Agentes
 agno
 
-# OpenAI
+# llm
 openai
+google-genai
 
 # Banco de dados
 sqlalchemy

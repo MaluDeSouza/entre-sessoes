@@ -30,7 +30,7 @@ Faça uma pergunta por vez.
     def __init__(self, llm_service):
         self.llm = llm_service
 
-    def respond(self, conversation):
+    def generate(self, conversation):
 
         messages = [
             {
@@ -41,4 +41,4 @@ Faça uma pergunta por vez.
 
         messages.extend(conversation)
 
-        return self.llm.chat(messages)
+        return self.llm.generate(messages)

@@ -1,4 +1,8 @@
 import streamlit as st
+from agents.journal_agent import JournalAgent
+from services.gemini_service import GeminiService
+
+
 
 st.set_page_config(
     page_title="Entre Sessões",
@@ -13,6 +17,11 @@ Sua memória emocional entre sessões de terapia.
 Nem tudo que acontece durante a semana chega à terapia.
 Registre seus pensamentos antes que eles sejam esquecidos.
 """)
+
+llm = GeminiService()
+
+journal = JournalAgent(llm)
+
 
 # Histórico da conversa
 if "messages" not in st.session_state:
@@ -36,11 +45,9 @@ if prompt := st.chat_input("O que aconteceu hoje?"):
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    resposta = (
-        "Obrigado por compartilhar isso comigo.\n\n"
-        "Gostaria de entender melhor o que aconteceu. "
-        "Pode me contar um pouco mais?"
-    )
+    conversation = st.session_state.messages.copy()
+
+    resposta = journal.generate(conversation)
 
     st.session_state.messages.append(
         {
