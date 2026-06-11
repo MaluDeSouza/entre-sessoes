@@ -1,9 +1,9 @@
 import streamlit as st
 from agents.journal_agent import JournalAgent
 from services.gemini_service import GeminiService
-
-
-from services.conversation_service import ConversationService 
+from services.conversation_service import ConversationService
+from agents.analysis_agent import AnalysisAgent
+from services.analysis_service import AnalysisService
 
 st.set_page_config(page_title="Entre Sessões", page_icon="🫧")
 st.title("🫧 Entre Sessões")
@@ -59,3 +59,38 @@ if prompt := st.chat_input("O que aconteceu hoje?"):
     # D) Salva a resposta do Agente na memória da tela e no banco de dados
     st.session_state.messages.append({"role": "assistant", "content": response})
     db_service.save_message(st.session_state.conversation_id, "assistant", response)
+    
+# --- BARRA LATERAL (SIDEBAR) ---
+with st.sidebar:
+    st.header("Opções da Sessão")
+    st.markdown("Quando terminar de refletir, encerre a sessão para salvar seus insights emocionais.")
+    
+    if st.button("Encerrar Sessão", type="primary"):
+        # Só analisa se houver alguma conversa
+        if len(st.session_state.messages) > 0:
+            with st.spinner("Analisando sua sessão e estruturando suas emoções..."):
+                try:
+                    # 1. Roda a análise com o Agente
+                    analyst = AnalysisAgent()
+                    resultado = analyst.analyze_conversation(st.session_state.messages)
+                    
+                    # 2. Salva no Banco de Dados
+                    analysis_db = AnalysisService()
+                    analysis_db.save_analysis(st.session_state.conversation_id, resultado)
+                    
+                    # 3. Exibe o resumo na tela para dar feedback imediato de valor ao usuário
+                    st.success("Sessão salva com sucesso!")
+                    st.write("**Resumo da sua sessão:**")
+                    st.info(resultado["summary"])
+                    
+                    st.write("**Tema Principal:**", resultado["main_theme"])
+                    st.write("**Intensidade Emocional:**", f"{resultado['intensity']}/10")
+                    
+                    # Opcional: Limpar a sessão da memória para o usuário poder iniciar uma nova
+                    # st.session_state.pop("conversation_id", None)
+                    # st.session_state.pop("messages", None)
+                    
+                except Exception as e:
+                    st.error(f"Ocorreu um erro ao processar a sessão: {e}")
+        else:
+            st.warning("A conversa ainda está vazia. Escreva algo antes de encerrar!")
