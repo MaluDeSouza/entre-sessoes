@@ -1,7 +1,6 @@
 import os
 
 from dotenv import load_dotenv
-
 from agno.agent import Agent
 from agno.models.google import Gemini
 
@@ -22,17 +21,22 @@ class GeminiService:
         )
 
     def generate(self, messages):
+        """
+        Recebe uma lista de mensagens e devolve apenas o texto da resposta.
+        """
 
         prompt = self._build_prompt(messages)
 
         response = self.agent.run(prompt)
-        print(type(response))
-        print(response)
+
         return response.content
 
     def _build_prompt(self, messages):
+        """
+        Converte o histórico em um único prompt.
+        """
 
-        prompt = ""
+        sections = []
 
         for message in messages:
 
@@ -40,27 +44,12 @@ class GeminiService:
             content = message["content"]
 
             if role == "system":
-                prompt += f"Sistema:\n{content}\n\n"
+                sections.append(f"Sistema:\n{content}")
 
             elif role == "user":
-                prompt += f"Usuário:\n{content}\n\n"
+                sections.append(f"Usuário:\n{content}")
 
             elif role == "assistant":
-                prompt += f"Assistente:\n{content}\n\n"
+                sections.append(f"Assistente:\n{content}")
 
-        return prompt
-
-if __name__ == "__main__":
-
-    service = GeminiService()
-
-    resposta = service.generate(
-        [
-            {
-                "role": "user",
-                "content": "Diga apenas 'Olá Mundo'"
-            }
-        ]
-    )
-
-    print(resposta)
+        return "\n\n".join(sections)
