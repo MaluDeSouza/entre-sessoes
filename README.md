@@ -7,3 +7,5 @@ O objetivo é auxiliar pessoas a organizar pensamentos e acontecimentos entre se
 Status:
 
 🚧 Em desenvolvimento
+
+python -m streamlit run app/streamlit_app.py 
