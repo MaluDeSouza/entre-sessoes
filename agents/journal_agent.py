@@ -26,10 +26,11 @@ class JournalAgent:
         with open(prompt_path, "r", encoding="utf-8") as file:
             return file.read()
 
-    def generate(self, conversation_history):
+    def generate(self, conversation_history, audio_path: str = None):
         """
         Recebe o histórico completo da conversa e envia para o LLM.
-
+        Suporta o envio de um arquivo de áudio opcional para análise multimodal nativa.
+        
         conversation_history deve ser uma lista no formato:
 
         [
@@ -48,6 +49,6 @@ class JournalAgent:
 
         messages.extend(conversation_history)
 
-        response = self.llm.generate(messages)
+        response = self.llm.generate(messages, audio_path=audio_path)
 
         return response
