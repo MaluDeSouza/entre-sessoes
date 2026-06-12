@@ -9,6 +9,7 @@ from services.analysis_service import AnalysisService
 from agents.summary_agent import SummaryAgent
 from services.summary_service import SummaryService
 from services.dashboard_service import DashboardService
+from services.insight_service import InsightService
 
 st.set_page_config(page_title="Entre Sessões", page_icon="🫧")
 st.title("🫧 Entre Sessões")
@@ -18,7 +19,12 @@ Nem tudo que acontece durante a semana chega à terapia. Registre seus pensament
 """)
 
 # Criação das Abas
-aba_diario, aba_resumo, aba_dashboard = st.tabs(["💬 Meu Diário", "📊 Resumo Semanal", "📈 Dashboard & Timeline"])
+aba_diario, aba_resumo, aba_dashboard, aba_padroes = st.tabs([
+    "💬 Meu Diário", 
+    "📊 Resumo Semanal", 
+    "📈 Dashboard", 
+    "🧠 Meus Padrões"
+])
 
 # ==========================================
 # ABA 1: O DIÁRIO (Chat)
@@ -142,7 +148,37 @@ with aba_dashboard:
                 st.caption(f"🗓️ {item['date']} | 🏷️ Tema: **{item['theme']}** | ⚡ Intensidade: {item['intensity']}/10")
                 st.write(item['summary'])
 
+# ==========================================
+# ABA 4: MEUS PADRÕES (Insights - Versão 1.0)
+# ==========================================
+with aba_padroes:
+    st.header("🧠 Padrões e Insights Profundos")
+    st.markdown("Deixe a IA analisar seu último mês e revelar conexões invisíveis entre suas emoções e acontecimentos. Ideal para levar à terapia.")
 
+    # Usamos o botão para acionar o serviço
+    if st.button("Descobrir Meus Padrões (Últimos 30 dias)", type="primary"):
+        with st.spinner("Analisando semanas de conversas em busca de padrões..."):
+            try:
+                insight_service = InsightService()
+                resultado = insight_service.generate_and_save_insights(user_id=1, days=30)
+
+                if not resultado:
+                    st.info("Ainda não há reflexões suficientes nos últimos 30 dias para gerar insights profundos.")
+                else:
+                    st.success("Padrões comportamentais mapeados com sucesso!")
+                    
+                    # Exibe cada insight em um cartão estilizado
+                    for item in resultado["insights"]:
+                        with st.container(border=True):
+                            st.subheader(f"💡 {item['title']}")
+                            st.write(item['description'])
+                    
+                    st.divider()
+                    st.write(f"*{resultado['closing_message']}*")
+
+            except Exception as e:
+                st.error(f"Ocorreu um erro ao gerar os insights: {e}")
+                
 # ==========================================
 # BARRA LATERAL (Encerrar Sessão Diária)
 # ==========================================
