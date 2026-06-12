@@ -8,6 +8,7 @@ from services.analysis_service import AnalysisService
 # NOVAS IMPORTAÇÕES PARA O RESUMO SEMANAL
 from agents.summary_agent import SummaryAgent
 from services.summary_service import SummaryService
+from services.dashboard_service import DashboardService
 
 st.set_page_config(page_title="Entre Sessões", page_icon="🫧")
 st.title("🫧 Entre Sessões")
@@ -17,7 +18,7 @@ Nem tudo que acontece durante a semana chega à terapia. Registre seus pensament
 """)
 
 # Criação das Abas
-aba_diario, aba_resumo = st.tabs(["💬 Meu Diário", "📊 Resumo Semanal"])
+aba_diario, aba_resumo, aba_dashboard = st.tabs(["💬 Meu Diário", "📊 Resumo Semanal", "📈 Dashboard & Timeline"])
 
 # ==========================================
 # ABA 1: O DIÁRIO (Chat)
@@ -91,6 +92,56 @@ with aba_resumo:
                             
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar o resumo: {e}")
+                
+# ==========================================
+# ABA 3: DASHBOARD & TIMELINE (Copie e cole isso abaixo da aba_resumo)
+# ==========================================
+with aba_dashboard:
+    st.header("📈 Seu Painel Emocional")
+    st.markdown("Visualize a variação das suas emoções e acompanhe o histórico das suas reflexões.")
+
+    # Instancia o serviço que acabou de funcionar no nosso teste
+    dashboard_service = DashboardService()
+
+    # --- PARTE 1: DASHBOARD (Versão 0.4) ---
+    st.subheader("Análise Gráfica")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("**Evolução da Intensidade Média**")
+        df_intensity = dashboard_service.get_intensity_timeline()
+        if not df_intensity.empty:
+            # Uma única linha desenha o gráfico de linha!
+            st.line_chart(df_intensity)
+        else:
+            st.info("Ainda não há dados suficientes de intensidade.")
+
+    with col2:
+        st.markdown("**Emoções Mais Frequentes**")
+        df_emotions = dashboard_service.get_emotions_frequency()
+        if not df_emotions.empty:
+            # Uma única linha desenha o gráfico de barras!
+            st.bar_chart(df_emotions)
+        else:
+            st.info("Ainda não há dados suficientes de emoções.")
+
+    st.divider()
+
+    # --- PARTE 2: TIMELINE FEED (Versão 0.5) ---
+    st.header("⏳ Timeline de Reflexões")
+    st.markdown("Seu histórico de sessões em ordem cronológica (das mais recentes para as mais antigas).")
+
+    feed = dashboard_service.get_timeline_feed()
+
+    if not feed:
+        st.info("Nenhuma reflexão encontrada na timeline.")
+    else:
+        for item in feed:
+            # Cria um "card" visual para cada sessão da linha do tempo
+            with st.container(border=True):
+                st.caption(f"🗓️ {item['date']} | 🏷️ Tema: **{item['theme']}** | ⚡ Intensidade: {item['intensity']}/10")
+                st.write(item['summary'])
+
 
 # ==========================================
 # BARRA LATERAL (Encerrar Sessão Diária)
