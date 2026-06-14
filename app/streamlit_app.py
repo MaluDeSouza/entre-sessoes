@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+import time
 from agents.journal_agent import JournalAgent
 from services.gemini_service import GeminiService
 from services.conversation_service import ConversationService
@@ -46,22 +47,29 @@ with aba_diario:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-    # ==========================================
+# ==========================================
     # ENTRADA DE ÁUDIO (Versão 2.0)
     # ==========================================
-    if "audio_processado" not in st.session_state:
-        st.session_state.audio_processado = False
-        
     audio_value = st.audio_input("Ou grave um áudio de desabafo:")
     
-    if audio_value and not st.session_state.audio_processado:
-        # 1. Cria a pasta temp e salva o arquivo de áudio fisicamente
+    # Rastreia uma chave única baseada no nome e tamanho do arquivo
+    if "ultimo_audio_chave" not in st.session_state:
+        st.session_state.ultimo_audio_chave = None
+
+    # Gera a assinatura do áudio atual se ele existir
+    chave_audio_atual = f"{audio_value.name}_{audio_value.size}" if audio_value else None
+
+    # Se existir um áudio gravado e a chave for DIFERENTE da que já processamos
+    if audio_value and st.session_state.ultimo_audio_chave != chave_audio_atual:
+        
+        # 1. Cria a pasta temp e salva o arquivo fisicamente com um nome ÚNICO
         os.makedirs("temp", exist_ok=True)
-        audio_path = "temp/user_audio.wav"
+        audio_path = f"temp/user_audio_{int(time.time())}.wav"
+        
         with open(audio_path, "wb") as f:
             f.write(audio_value.getbuffer())
         
-        # 2. Exibe o envio no chat visual e salva no banco de dados (ConversationService)
+        # 2. Exibe o envio no chat visual e salva no banco de dados
         audio_marker = "🎤 [Áudio enviado pelo usuário]"
         st.session_state.messages.append({"role": "user", "content": audio_marker})
         with st.chat_message("user"):
@@ -69,7 +77,7 @@ with aba_diario:
             
         db_service.save_message(st.session_state.conversation_id, "user", audio_marker)
 
-        # 3. Chama o Agente passando o caminho do arquivo de áudio!
+        # 3. Chama o Agente passando o caminho do arquivo de áudio
         with st.chat_message("assistant"):
             with st.spinner("Ouvindo seu áudio atentamente..."):
                 response = journal.generate(st.session_state.messages, audio_path=audio_path)
@@ -79,10 +87,9 @@ with aba_diario:
         st.session_state.messages.append({"role": "assistant", "content": response})
         db_service.save_message(st.session_state.conversation_id, "assistant", response)
         
-        # Dá um pequeno refresh na interface para limpar o gravador
-        st.session_state.audio_processado = True
+        # 5. CORREÇÃO: Atualiza a chave de controle com a assinatura do áudio atual
+        st.session_state.ultimo_audio_chave = chave_audio_atual
         st.rerun()
-
     # ==========================================
     # ENTRADA DE TEXTO (Mantemos o fluxo original)
     # ==========================================

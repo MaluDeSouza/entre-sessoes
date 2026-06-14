@@ -24,38 +24,34 @@ class GeminiService(LLMService):
     def generate(self, messages: list, audio_path: str = None) -> str:
         """
         Recebe o histórico de mensagens e opcionalmente um caminho de áudio.
-        Retorna o texto da resposta gerada pelo Gemini de forma nativa.
+        Retorna o texto da resposta gerada pelo Gemini, garantindo a mesma persona.
         """
+        # 1. Usa o MESMO construtor de prompt para texto e áudio!
+        # Isso garante que as regras do JournalAgent nunca sejam ignoradas.
+        prompt_text = self._build_prompt(messages)
+
         if audio_path:
-            # Transforma o arquivo de áudio em mídia nativa do Agno
+            # Mapeia o MIME type
             if audio_path.endswith(".ogg"):
-                mime_type = "audio/ogg; codecs=opus"
+                mime_type = "audio/ogg"
             elif audio_path.endswith(".wav"):
                 mime_type = "audio/wav"
             else:
                 mime_type = None
 
-            # Transforma o arquivo de áudio em mídia nativa com o formato explícito
             audio_media = Audio(filepath=audio_path, mime_type=mime_type)
-                    
-            prompt_tecnico = (
-                "O usuário enviou o arquivo de áudio anexado. "
-                "Processe o conteúdo falado e gere a sua resposta baseando-se UNICAMENTE "
-                "nas regras, formato e persona definidos no seu System Prompt."
-            )
             
+            # 2. Envia o roteiro formatado exatamente igual ao texto, mas com o áudio anexado
             response = self.agent.run(
-                prompt_tecnico,
-                audio=[audio_media],
-                messages=messages
+                prompt_text,
+                audio=[audio_media]
             )
         else:
-            # Fluxo normal de texto: mantemos a retrocompatibilidade usando o achatamento de prompt
-            prompt_text = self._build_prompt(messages)
+            # Fluxo normal de texto puro
             response = self.agent.run(prompt_text)
 
         return response.content
-
+        
     def _build_prompt(self, messages):
         """
         Converte o histórico em um único prompt (utilizado apenas para o fluxo de texto legacy).
