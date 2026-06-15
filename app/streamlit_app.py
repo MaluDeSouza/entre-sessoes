@@ -12,6 +12,8 @@ from agents.summary_agent import SummaryAgent
 from services.summary_service import SummaryService
 from services.dashboard_service import DashboardService
 from services.insight_service import InsightService
+from services.search_service import SearchService
+from agents.search_agent import SearchAgent
 
 st.set_page_config(page_title="Entre Sessões", page_icon="🫧")
 st.title("🫧 Entre Sessões")
@@ -21,11 +23,12 @@ Nem tudo que acontece durante a semana chega à terapia. Registre seus pensament
 """)
 
 # Criação das Abas
-aba_diario, aba_resumo, aba_dashboard, aba_padroes = st.tabs([
+aba_diario, aba_resumo, aba_dashboard, aba_padroes, aba_busca = st.tabs([
     "💬 Meu Diário", 
     "📊 Resumo Semanal", 
     "📈 Dashboard", 
-    "🧠 Meus Padrões"
+    "🧠 Meus Padrões",
+    "🔍 Explorar Memórias"
 ])
 
 # ==========================================
@@ -228,6 +231,45 @@ with aba_padroes:
 
             except Exception as e:
                 st.error(f"Ocorreu um erro ao gerar os insights: {e}")
+
+# ==========================================
+# ABA 5: EXPLORAR MEMÓRIAS (Versão 3.0)
+# ==========================================
+with aba_busca:
+    st.header("🔍 Converse com o seu passado")
+    st.markdown("Faça perguntas específicas sobre o seu histórico emocional para a inteligência artificial.")
+
+    # Cria duas colunas para os campos de entrada ficarem organizados
+    col1, col2 = st.columns([2, 3])
+    with col1:
+        tema_busca = st.text_input("Qual tema o banco de dados deve filtrar?", placeholder="ex: Direção, Carreira, Ansiedade")
+    with col2:
+        pergunta_usuario = st.text_input("O que você quer perguntar à IA?", placeholder="ex: Como evoluiu meu medo de dirigir?")
+
+    if st.button("Buscar no Passado", type="primary"):
+        if not tema_busca or not pergunta_usuario:
+            st.warning("Por favor, preencha o tema e a pergunta para continuar.")
+        else:
+            with st.spinner("Consultando seus arquivos mentais..."):
+                try:
+                    # 1. Filtra as memórias no Banco de Dados
+                    search_service = SearchService()
+                    memorias = search_service.search_memories(user_id=1, search_term=tema_busca)
+
+                    # 2. Responde com a IA se encontrar algo
+                    search_agent = SearchAgent()
+                    resultado = search_agent.answer_query(user_question=pergunta_usuario, memories=memorias)
+                    
+                    st.success(f"Foram lidas {len(memorias)} memória(s) sobre o tema '{tema_busca}'.")
+                    
+                    # 3. Exibe o resultado na tela
+                    with st.container(border=True):
+                        st.markdown(f"**A resposta da IA para você:**\n\n{resultado['answer']}")
+                        st.divider()
+                        st.caption(f"🏷️ **Temas relacionados:** {', '.join(resultado['related_themes'])}")
+                        
+                except Exception as e:
+                    st.error(f"Ocorreu um erro ao explorar as memórias: {e}")
                 
 # ==========================================
 # BARRA LATERAL (Encerrar Sessão Diária)
